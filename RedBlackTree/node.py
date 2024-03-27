@@ -40,6 +40,12 @@ class Node:
             self._height = self.father.height - 1
         return self._height
     
+    @height.setter
+    def height(self, value: int) -> None:
+        if self.father:
+            raise Exception('Node is not root')
+        self._height = value
+
     @property
     def is_left_child(self) -> bool:
         if not self.father:
@@ -56,6 +62,12 @@ class Node:
             )
         return self._position
     
+    @position.setter
+    def position(self, value: tuple[int]) -> None:
+        if self.father:
+            raise Exception('Node is not root')
+        self._position = value
+        
     @property
     def uncle(self):
         if not self.grandpa:

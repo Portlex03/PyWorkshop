@@ -1,21 +1,26 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 from node import Node
-import random
+
+def root_x_pos(max_height: int) -> int:
+    return sum([2**n for n in range(1, max_height)])
+
+def root_y_pos(max_height: int) -> int:
+    return 2 * (max_height - 1)
 
 class RedBlackTree:
-    def __init__(self, max_height: int = 20) -> None:
-        self._edges: list[tuple[Node]] = []
-        self._nodes: list[Node] = []
-        self.max_height = max_height
+    def __init__(self) -> None:
+        self.edges: list[tuple[Node]] = []
+        self.nodes: list[Node] = []
+        self.max_height = 1
         self.root = Node(
-            height=max_height,
+            height=self.max_height,
             position=(
-                sum([2**n for n in range(1, max_height)]), 
-                2*(max_height-1)
+                root_x_pos(self.max_height), 
+                root_y_pos(self.max_height)
             )
         )
-        self._nodes.append(self.root)
+        self.nodes.append(self.root)
 
     @staticmethod
     def __black_root_check(func):
@@ -51,12 +56,12 @@ class RedBlackTree:
         return node.grandpa
 
     def __add_node_and_edge(self, node: Node, edge: tuple[Node]) -> None:
-        self._nodes.append(node)
-        self._edges.append(edge)
+        self.nodes.append(node)
+        self.edges.append(edge)
     
     def __replace_edges(self, edge2replace: tuple[Node], need_edge: tuple[Node]):
-        self._edges.remove(edge2replace)
-        self._edges.append(need_edge)
+        self.edges.remove(edge2replace)
+        self.edges.append(need_edge)
     
     def __left_right_turning(self, node: Node) -> None:
         father = node.father
@@ -134,24 +139,32 @@ class RedBlackTree:
     
     @property
     def node_colors(self) -> list[str]:
-        return [node.color for node in self._nodes]
+        return [node.color for node in self.nodes]
     
     @property
     def node_positions(self) -> dict[int, tuple]:
         node_positions = {}
-        for node in self._nodes:
+        for node in self.nodes:
             node_positions[node] = node.position
         return node_positions
 
     @__black_root_check
     @__tree_balance_check
     def add_node(self, value: int) -> Node:
-        node = self.root
+        node, height = self.root, 1
         while node:
             node = node.left_child if value < node else node.right_child
+            height += 1
         node.color, node.value = 'Red', value
         self.__add_node_and_edge(node.left_child, (node, node.left_child))
         self.__add_node_and_edge(node.right_child, (node, node.right_child))
+        if height > self.max_height:
+            self.max_height = height
+            self.root.height = self.max_height
+            self.root.position = (
+                root_x_pos(self.max_height), 
+                root_y_pos(self.max_height)
+            )
         return node
 
     def add_nodes_from(self, values_list: list) -> None:
@@ -165,8 +178,8 @@ class RedBlackTree:
         margins: float = 0.4
     ) -> plt.Figure:
         g = nx.DiGraph()
-        g.add_nodes_from(self._nodes)
-        g.add_edges_from(self._edges)
+        g.add_nodes_from(self.nodes)
+        g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
