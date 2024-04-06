@@ -1,7 +1,9 @@
-RedBlackTree/venv/
+venv/
 
-RedBlackTree/test.ipynb
+test.ipynb
 
-RedBlackTree/__pycache__
+__pycache__/
 
 venv_commands.txt
+
+Project/

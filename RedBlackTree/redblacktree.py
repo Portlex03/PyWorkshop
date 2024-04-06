@@ -1,194 +1,159 @@
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
 from node import Node
+from color import Color
+from position import Position
+import math
 
-def root_x_pos(max_height: int) -> int:
-    return sum([2**n for n in range(1, max_height)])
-
-def root_y_pos(max_height: int) -> int:
-    return 2 * (max_height - 1)
 
 class RedBlackTree:
-    def __init__(self) -> None:
-        self.edges: list[tuple[Node]] = []
-        self.nodes: list[Node] = []
-        self.max_height = 1
-        self.root = Node(
-            height=self.max_height,
-            position=(
-                root_x_pos(self.max_height), 
-                root_y_pos(self.max_height)
-            )
-        )
-        self.nodes.append(self.root)
+    def __init__(self):
+        self.root: Node = Node()
+        self.nodes: list[Node] = [self.root]
 
-    @staticmethod
-    def __black_root_check(func):
-        def wrapper(*args, **kwargs):
-            func(*args, **kwargs)
-            args[0].root.color = 'Black'
-        return wrapper
-    
-    @staticmethod
-    def __tree_balance_check(func):
-        def wrapper(*args, **kwargs):
-            node: Node = func(*args, **kwargs)
-            self: RedBlackTree = args[0]
-            if self.max_height - node.height < 2 or node.father.color == 'Black':
-                return node
-            if node.uncle.color == 'Red':
-                return self.__red_uncle_case(node)
-            elif node < node.father:
-                if node.father < node.grandpa:
-                    return self.__right_turning(node)
-                return self.__right_left_turning(node)
-            elif node > node.father:
-                if node.father < node.grandpa:
-                    return self.__left_right_turning(node)
-                return self.__left_turning(node)
-        return wrapper
-    
-    @__tree_balance_check
-    def __red_uncle_case(self, node: Node) -> Node:
-        node.father.color = 'Black'
-        node.uncle.color = 'Black'
-        node.grandpa.color = 'Red'
-        return node.grandpa
+    def __balance(self, node: Node):
+        if node.grandpa and node.father.is_red:
+            if node.uncle.is_red:
+                node.father.color = Color.Black
+                node.uncle.color = Color.Black
+                node.grandpa.color = Color.Red
+                self.__balance(node.grandpa)
+            elif node.father < node.grandpa:
+                self.__LLturn(node)
+            elif node.father > node.grandpa:
+                self.__RRturn(node)
+        self.root.color = Color.Black
+        Node.Height = int(2 * math.log2(len(self.nodes) + 1))
+        Node.Pos = Position(
+            sum([2**n for n in range(1, Node.Height)]), 2 * (Node.Height - 1))
 
-    def __add_node_and_edge(self, node: Node, edge: tuple[Node]) -> None:
-        self.nodes.append(node)
-        self.edges.append(edge)
-    
-    def __replace_edges(self, edge2replace: tuple[Node], need_edge: tuple[Node]):
-        self.edges.remove(edge2replace)
-        self.edges.append(need_edge)
-    
-    def __left_right_turning(self, node: Node) -> None:
-        father = node.father
-        grandpa = node.grandpa
-        node_left_child = node.left_child
-        self.__replace_edges((grandpa, father),(grandpa, node))
-        self.__replace_edges((father, node), (node, father))
-        self.__replace_edges((node, node_left_child), (father, node_left_child))
-        grandpa.left_child = node
-        node.father = grandpa
-        father.right_child = node_left_child
-        father.father = node
-        node_left_child.father = father
-        node.left_child = father
-        self.__right_turning(father)
-
-    def __left_turning(self, node: Node) -> None:
-        head = node.grandpa.father
-        grandpa = node.grandpa
-        father = node.father
-        father_left_child = node.father.left_child
-        if not head:
-            father.father = None 
-            father._height = grandpa.height
-            father._position = grandpa.position
-            self.root = father
+    def __black_list_case(self, node: Node):
+        brother = node.brother
+        if not brother:
+            return
+        if brother.is_black:
+            if brother.left.is_black and brother.right.is_black:
+                brother.color = Color.Red
+                if brother.father.is_red:
+                    brother.father.color = Color.Black
+                else:
+                    self.__black_list_case(node.father)
+            elif brother.is_left:
+                if brother.right.is_red:
+                    self.__RRturn(brother.right.right)
+                brother.left.color = Color.Black
+                self.__LLturn(brother.left)
+            else:
+                if brother.left.is_red:
+                    self.__LLturn(brother.left.left)
+                brother.right.color = Color.Black
+                self.__RRturn(brother.right)
         else:
-            head.replace_child(grandpa, father)
-            father.father = head
-            self.__replace_edges((head, grandpa), (head, father))
-        father.color, grandpa.color = (grandpa.color, father.color)
-        grandpa.right_child = father_left_child
-        father_left_child.father = grandpa
-        father.left_child = grandpa
-        grandpa.father = father
-        self.__replace_edges((grandpa, father), (father, grandpa))
-        self.__replace_edges((father, father_left_child), (grandpa, father_left_child))
+            if brother.is_left:
+                self.__LLturn(brother.left)
+            else:
+                self.__RRturn(brother.right)
+            self.__black_list_case(node)
 
-    def __right_left_turning(self, node: Node) ->None:
+    def __LLturn(self, node: Node):
+        if node and node > node.father:
+            self.__RRturn(node.right)
         father = node.father
         grandpa = node.grandpa
-        node_right_child = node.right_child
-        self.__replace_edges((grandpa, father),(grandpa, node))
-        self.__replace_edges((father, node), (node, father))
-        self.__replace_edges((node, node_right_child), (father, node_right_child))
-        grandpa.right_child = node
+        uncle = node.uncle
+        father_right = father.right
+        father.value, grandpa.value = grandpa.value, father.value
+        grandpa.right = grandpa.left
+        grandpa.left = node
+        father.right = uncle
+        father.left = father_right
+        uncle.father = father
         node.father = grandpa
-        father.left_child = node_right_child
-        father.father = node
-        node_right_child.father = father
-        node.right_child = father
-        self.__left_turning(father)
 
-    def __right_turning(self, node: Node) -> None:
-        head = node.grandpa.father
-        grandpa = node.grandpa
+    def __RRturn(self, node: Node):
+        if node and node < node.father:
+            self.__LLturn(node.left)
         father = node.father
-        father_right_child = node.father.right_child
-        if not head:
-            father.father = None
-            father._height = grandpa.height
-            father._position = grandpa.position
-            self.root = father
-        else:
-            head.replace_child(grandpa, father)
-            father.father = head
-            self.__replace_edges((head, grandpa), (head, father))
-        father.color, grandpa.color = (grandpa.color, father.color)
-        grandpa.left_child = father_right_child
-        father_right_child.father=grandpa
-        father.right_child = grandpa
-        grandpa.father = father
-        self.__replace_edges((grandpa, father), (father, grandpa))
-        self.__replace_edges((father, father_right_child), (grandpa, father_right_child))
-    
-    @property
-    def node_colors(self) -> list[str]:
-        return [node.color for node in self.nodes]
-    
-    @property
-    def node_positions(self) -> dict[int, tuple]:
-        node_positions = {}
-        for node in self.nodes:
-            node_positions[node] = node.position
-        return node_positions
+        grandpa = node.grandpa
+        uncle = node.uncle
+        father_left = father.left
+        father.value, grandpa.value = grandpa.value, father.value
+        grandpa.left = grandpa.right
+        grandpa.right = node
+        father.left = uncle
+        father.right = father_left
+        uncle.father = father
+        node.father = grandpa
 
-    @__black_root_check
-    @__tree_balance_check
-    def add_node(self, value: int) -> Node:
-        node, height = self.root, 1
-        while node:
-            node = node.left_child if value < node else node.right_child
-            height += 1
-        node.color, node.value = 'Red', value
-        self.__add_node_and_edge(node.left_child, (node, node.left_child))
-        self.__add_node_and_edge(node.right_child, (node, node.right_child))
-        if height > self.max_height:
-            self.max_height = height
-            self.root.height = self.max_height
-            self.root.position = (
-                root_x_pos(self.max_height), 
-                root_y_pos(self.max_height)
-            )
+    def insert(self, value: int):
+        node = self.search(value)
+        if node: 
+            raise ValueError(f'Value {value} already exists in the tree')
+        node.value = value
+        node.color = Color.Red
+        self.nodes.append(node.right)
+        self.nodes.append(node.left)
+        self.__balance(node)
+
+    def insert_from(self, values: list[int]):
+        for value in values:
+            self.insert(value)
+
+    def delete(self, obj: int | Node):
+        node = obj if isinstance(obj, Node) else self.search(obj)
+        if not node:
+            raise ValueError(f'Value {obj} not exists in tree')
+        elif node.children_count == 0:
+            if node.is_black:
+                self.__black_list_case(node)
+            self.nodes.remove(node.left)
+            self.nodes.remove(node.right)
+            node.value = None
+        elif node.children_count == 1:
+            node_child = node.left or node.right
+            node.value, node_child.value = node_child.value, node.value
+            self.delete(node_child)
+        elif node.children_count == 2:
+            max_right_child = node.left
+            while max_right_child.right:
+                max_right_child = max_right_child.right
+            node.value = max_right_child.value
+            self.delete(max_right_child)
+
+    def delete_from(self, values: list[int]):
+        for value in values:
+            self.delete(value)
+
+    def search(self, value: int) -> Node:
+        node = self.root
+        while node and node != value:
+            node = node.child(value)
         return node
 
-    def add_nodes_from(self, values_list: list) -> None:
-        for value in values_list:
-            self.add_node(value)
-
-    def image(self,
-        font_size: int = 14, 
-        node_size: int = 2000, 
-        figsize=(6, 6), 
-        margins: float = 0.4
-    ) -> plt.Figure:
+    def realize(self, figsize: tuple[int] = (6, 6), margins: float = 0):
         g = nx.DiGraph()
         g.add_nodes_from(self.nodes)
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
-            "font_size": font_size,
-            "node_color": self.node_colors,
-            "node_size": node_size,
+            "font_size": 12,
+            "node_color": self.colors,
+            "node_size": 1500,
             "width": 4,
         }
-        figure = plt.figure(figsize=figsize)
+        plt.figure(figsize=figsize)
         plt.margins(margins)
-        nx.draw_networkx(g, pos=self.node_positions, **options)
-        return figure
+        nx.draw_networkx(g, pos=self.positions, **options)
+
+    @property
+    def colors(self) -> list[str]:
+        return [node.color.value for node in self.nodes]
+
+    @property
+    def edges(self) -> list[tuple[Node]]:
+        return [(node, child) for node in self.nodes for child in [node.right, node.left] if node]
+
+    @property
+    def positions(self) -> dict[Node, tuple[int]]:
+        return {node: node.position.value for node in self.nodes}
