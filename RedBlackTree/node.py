@@ -1,5 +1,7 @@
 from position import Position
 from color import Color
+import math
+
 
 class Node:
     Height = 1
@@ -40,6 +42,20 @@ class Node:
 
     def child(self, value: int):
         return self.left if value < self else self.right
+
+    @classmethod
+    def update_height_and_position(cls, values_count: int):
+        # Node.Height = int(2 * math.log2(len(self.nodes) + 1))
+        # Node.Pos = Position(
+        #     sum([2**n for n in range(1, Node.Height)]), 2 * (Node.Height - 1))
+        pred_height = cls.Height
+        cls.Height = int(2 * math.log2(values_count + 1))
+        if cls.Height - pred_height > 0:
+            cls.Pos += (sum([2**n for n in range(pred_height,
+                        cls.Height)]), 2 * (cls.Height - pred_height))
+        else:
+            cls.Pos -= (sum([2**n for n in range(cls.Height,
+                        pred_height)]), 2 * (pred_height - cls.Height))
 
     @property
     def brother(self):

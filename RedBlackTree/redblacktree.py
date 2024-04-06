@@ -3,13 +3,12 @@ import networkx as nx
 from node import Node
 from color import Color
 from position import Position
-import math
 
 
 class RedBlackTree:
     def __init__(self):
         self.root: Node = Node()
-        self.nodes: list[Node] = [self.root]
+        self.nodes: dict[int, Node] = {hash(self.root): self.root}
 
     def __balance(self, node: Node):
         if node.grandpa and node.father.is_red:
@@ -23,9 +22,7 @@ class RedBlackTree:
             elif node.father > node.grandpa:
                 self.__RRturn(node)
         self.root.color = Color.Black
-        Node.Height = int(2 * math.log2(len(self.nodes) + 1))
-        Node.Pos = Position(
-            sum([2**n for n in range(1, Node.Height)]), 2 * (Node.Height - 1))
+        Node.update_height_and_position(len(self.nodes))
 
     def __black_list_case(self, node: Node):
         brother = node.brother
@@ -91,8 +88,8 @@ class RedBlackTree:
             raise ValueError(f'Value {value} already exists in the tree')
         node.value = value
         node.color = Color.Red
-        self.nodes.append(node.right)
-        self.nodes.append(node.left)
+        self.nodes[hash(node.right)] = node.right
+        self.nodes[hash(node.left)] = node.left
         self.__balance(node)
 
     def insert_from(self, values: list[int]):
@@ -106,8 +103,8 @@ class RedBlackTree:
         elif node.children_count == 0:
             if node.is_black:
                 self.__black_list_case(node)
-            self.nodes.remove(node.left)
-            self.nodes.remove(node.right)
+            self.nodes.pop(hash(node.left))
+            self.nodes.pop(hash(node.right))
             node.value = None
         elif node.children_count == 1:
             node_child = node.left or node.right
@@ -119,6 +116,7 @@ class RedBlackTree:
                 max_right_child = max_right_child.right
             node.value = max_right_child.value
             self.delete(max_right_child)
+        Node.update_height_and_position(len(self.nodes))
 
     def delete_from(self, values: list[int]):
         for value in values:
@@ -132,7 +130,7 @@ class RedBlackTree:
 
     def realize(self, figsize: tuple[int] = (6, 6), margins: float = 0):
         g = nx.DiGraph()
-        g.add_nodes_from(self.nodes)
+        g.add_nodes_from(self.nodes.values())
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
@@ -148,12 +146,12 @@ class RedBlackTree:
 
     @property
     def colors(self) -> list[str]:
-        return [node.color.value for node in self.nodes]
+        return [node.color.value for node in self.nodes.values()]
 
     @property
     def edges(self) -> list[tuple[Node]]:
-        return [(node, child) for node in self.nodes for child in [node.right, node.left] if node]
+        return [(node, child) for node in self.nodes.values() for child in [node.right, node.left] if node]
 
     @property
     def positions(self) -> dict[Node, tuple[int]]:
-        return {node: node.position.value for node in self.nodes}
+        return {node: node.position.value for node in self.nodes.values()}
