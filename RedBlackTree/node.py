@@ -45,9 +45,6 @@ class Node:
 
     @classmethod
     def update_height_and_position(cls, values_count: int):
-        # Node.Height = int(2 * math.log2(len(self.nodes) + 1))
-        # Node.Pos = Position(
-        #     sum([2**n for n in range(1, Node.Height)]), 2 * (Node.Height - 1))
         pred_height = cls.Height
         cls.Height = int(2 * math.log2(values_count + 1))
         if cls.Height - pred_height > 0:

@@ -2,13 +2,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from node import Node
 from color import Color
-from position import Position
 
 
 class RedBlackTree:
     def __init__(self):
         self.root: Node = Node()
         self.nodes: dict[int, Node] = {hash(self.root): self.root}
+
+    def __repr__(self) -> str:
+        return '<RedBlackTree(Nodes={})>'.format([str(node) for node in self.nodes.values() if node])
 
     def __balance(self, node: Node):
         if node.grandpa and node.father.is_red:
@@ -128,21 +130,19 @@ class RedBlackTree:
             node = node.child(value)
         return node
 
-    def realize(self, figsize: tuple[int] = (6, 6), margins: float = 0):
+    def realize(self, font_size: int = 12, node_size: int = 1500):
         g = nx.DiGraph()
         g.add_nodes_from(self.nodes.values())
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
-            "font_size": 12,
+            "font_size": font_size,
             "node_color": self.colors,
-            "node_size": 1500,
+            "node_size": node_size,
             "width": 4,
         }
-        plt.figure(figsize=figsize)
-        plt.margins(margins)
-        nx.draw_networkx(g, pos=self.positions, **options)
+        return g, self.positions, options
 
     @property
     def colors(self) -> list[str]:
