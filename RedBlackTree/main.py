@@ -34,6 +34,29 @@ def clear_insert_text():
     session["insert_field"] = ""
 sidebar.button(label='Вставить', key='insert_button', on_click=clear_insert_text, use_container_width=True)
 
+# поиск элемента
+sidebar.subheader('Поиск')
+value = sidebar.text_input(label='Введите число:', key='search_field', placeholder='Пример: 34', label_visibility='collapsed')
+if sidebar.button(label='Найти', key='search_button', use_container_width=True) and value:
+    node = session.tree.search(int(value))
+    if node:
+        st.success(f'Найден узел {value}', icon='✅')
+    else:
+        st.warning(f'Не найдено: {value}', icon='⚠️')
+
+# удаление чисел
+sidebar.subheader('🗑 Удаление чисел')
+sidebar.text_input(
+    label='Введите числа:',
+    placeholder='Пример: 16 5 4 23 1',
+    key='values2delete',
+    label_visibility='collapsed'
+)
+def clear_delete_text():
+    session.deleting_values = session.values2delete
+    session["values2delete"] = ""
+sidebar.button(label='Удалить', key='delete_button', on_click=clear_delete_text, use_container_width=True)
+
 # вставка случайных числел
 sidebar.subheader('🎲Вставка случайных чисел')
 random_insert_holder = st.sidebar.empty()
@@ -53,18 +76,6 @@ def insert_random():
         st.success(f'Успешно добавлены значения {values}', icon='✅')
 sidebar.button(label='Вставить', key='random_insert_button', on_click=insert_random, use_container_width=True)
 
-# удаление чисел
-sidebar.subheader('🗑 Удаление чисел')
-sidebar.text_input(
-    label='Введите числа:',
-    placeholder='Пример: 16 5 4 23 1',
-    key='values2delete',
-    label_visibility='collapsed'
-)
-def clear_delete_text():
-    session.deleting_values = session.values2delete
-    session["values2delete"] = ""
-sidebar.button(label='Удалить', key='delete_button', on_click=clear_delete_text, use_container_width=True)
 
 # Удаление случайных чисел
 sidebar.subheader('🎲Удаление случайных чисел')
