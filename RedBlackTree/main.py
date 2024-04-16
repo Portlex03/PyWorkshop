@@ -141,10 +141,8 @@ def visualization():
 
 if session.insert_button:
     try:
-        new_values = set([
-            int(value) for value in 
-                session.new_values.split()
-        ])
+        new_values = [int(value) for value in 
+                      session.new_values.split()]
     except ValueError as e:
         new_values = None
         st.error(f'⛔️Неправильный ввод: {e}')
@@ -165,10 +163,8 @@ if session.insert_button:
 
 if session.delete_button:
     try:
-        values2delete = set([
-            int(value) for value in 
-                session.deleting_values.split()
-        ])
+        values2delete = [int(value) for value in 
+            session.deleting_values.split()]
     except ValueError as e:
         values2delete = None
         st.error(f'⛔️Неправильный ввод: {e}')
