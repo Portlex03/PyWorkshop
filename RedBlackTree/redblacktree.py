@@ -1,16 +1,11 @@
-import matplotlib.pyplot as plt
 import networkx as nx
 from node import Node
 from color import Color
-
 
 class RedBlackTree:
     def __init__(self):
         self.root: Node = Node()
         self.nodes: dict[int, Node] = {hash(self.root): self.root}
-
-    def __repr__(self) -> str:
-        return '<RedBlackTree(Nodes={})>'.format([str(node) for node in self.nodes.values() if node])
 
     def __balance(self, node: Node):
         if node.grandpa and node.father.is_red:
@@ -24,7 +19,7 @@ class RedBlackTree:
             elif node.father > node.grandpa:
                 self.__RRturn(node)
         self.root.color = Color.Black
-        Node.update_height_and_position(len(self.nodes))
+        self.root.set_position(len(self.nodes))
 
     def __black_list_case(self, node: Node):
         brother = node.brother
@@ -118,7 +113,7 @@ class RedBlackTree:
                 max_right_child = max_right_child.right
             node.value = max_right_child.value
             self.delete(max_right_child)
-        Node.update_height_and_position(len(self.nodes))
+        self.root.set_position(len(self.nodes))
 
     def delete_from(self, values: list[int]):
         for value in values:
@@ -130,16 +125,16 @@ class RedBlackTree:
             node = node.child(value)
         return node
 
-    def realize(self, font_size: int = 12, node_size: int = 1500):
+    def realize(self):
         g = nx.DiGraph()
         g.add_nodes_from(self.nodes.values())
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
-            "font_size": font_size,
+            "font_size": 7,
             "node_color": self.colors,
-            "node_size": node_size,
+            "node_size": 350,
             "width": 4,
         }
         return g, self.positions, options

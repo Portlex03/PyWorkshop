@@ -2,20 +2,17 @@ from position import Position
 from color import Color
 import math
 
-
 class Node:
-    Height = 1
-    Pos = Position(0, 0)
-
     def __init__(self, father=None) -> None:
         self.color = Color.Black
         self.father: Node | None = father
         self.left: Node | None = None
+        self._position: Position | None = None
         self.right: Node | None = None
         self._value: int | None = None
 
     def __bool__(self) -> bool:
-        return bool(self.value)
+        return bool(self.value) or self.value == 0
 
     def __eq__(self, obj) -> bool:
         if isinstance(obj, Node):
@@ -37,22 +34,19 @@ class Node:
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value < obj.value if isinstance(obj, Node) else self.value < obj
 
+    def __repr__(self) -> str:
+        if self:
+            return f'<{self.color.name}.Node: {self.value}>'
+        elif self.father:
+            side = 'Left' if self.is_left else 'Right'
+            return f'<{side}.List(father={self.father.value})>'
+        return '<Empty root>'
+
     def __str__(self) -> str:
         return str(self.value) if self else 'n'
 
     def child(self, value: int):
         return self.left if value < self else self.right
-
-    @classmethod
-    def update_height_and_position(cls, values_count: int):
-        pred_height = cls.Height
-        cls.Height = int(2 * math.log2(values_count + 1))
-        if cls.Height - pred_height > 0:
-            cls.Pos += (sum([2**n for n in range(pred_height,
-                        cls.Height)]), 2 * (cls.Height - pred_height))
-        else:
-            cls.Pos -= (sum([2**n for n in range(cls.Height,
-                        pred_height)]), 2 * (pred_height - cls.Height))
 
     @property
     def brother(self):
@@ -69,10 +63,6 @@ class Node:
         return self.father.father if self.father else None
 
     @property
-    def height(self):
-        return Node.Height if not self.father else self.father.height - 1
-
-    @property
     def is_black(self) -> bool:
         return self.color == Color.Black
 
@@ -86,7 +76,15 @@ class Node:
 
     @property
     def position(self) -> Position:
-        return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
+        if not self.father:
+            return self._position
+        left = (-1)**self.is_left
+        pos = self.father.position.value
+        return pos + Position(left * 2**(pos[1] - 1), -1)
+    
+    def set_position(self, count: int):
+        height = int(2 * math.log2(count + 1))
+        self._position = Position(2**height - 1, height)
 
     @property
     def uncle(self):
@@ -99,7 +97,7 @@ class Node:
     @value.setter
     def value(self, value: int) -> None:
         self._value = value if isinstance(value, int) else None
-        if self._value:
+        if self:
             self.left = self.left if self.left != None else Node(father=self)
             self.right = self.right if self.right != None else Node(
                 father=self)
